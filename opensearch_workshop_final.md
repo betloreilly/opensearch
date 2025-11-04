@@ -1,6 +1,6 @@
 # OpenSearch Advanced Workshop: E-commerce Scenario
 
-This workshop walks you through building a real e‑commerce search system with OpenSearch. We’ll work with a practical dataset, tune relevance so good results float to the top, and put everything on a dashboard. No fluff—just the pieces you actually need to run this in the real world.
+This workshop walks you through building a real e‑commerce search system with OpenSearch. We’ll work with a practical dataset, tune relevance so good results float to the top. 
 
 ---
 
@@ -76,7 +76,7 @@ It handles text, numbers, dates, geo—basically any JSON you throw at it.
 
 ### Documents & Indexes
 
-Everything is a JSON document. If you’re coming from SQL: a document is like a row; an index is like a table (the analogy breaks down quickly, but it’s close enough to start).
+Everything is a JSON document. If you’re coming from SQL: a document is like a row; an index is like a table.
 
 **Example document:**
 ```json
@@ -90,7 +90,7 @@ Everything is a JSON document. If you’re coming from SQL: a document is like a
 Quick facts:
 - Every document gets a unique `_id` (you can set it or let OpenSearch generate it)
 - Dynamic mapping works for a demo; in production, define mappings explicitly
-- Indexes scale to millions of documents without breaking a sweat
+- Indexes scale to millions of documents
 
 ### Arrays, Dot Notation, and Nested
 
@@ -648,7 +648,7 @@ Before you begin, install [Docker](https://www.docker.com/) on your machine.
 
 ### Set up a cluster without security
 
-1. Create a directory for your OpenSearch cluster (for example, `opensearch-cluster`). Create a `docker-compose.yml` file in this directory and copy the contents of the [Docker Compose file for development](https://opensearch.org/downloads.html) into this file.
+1. Create a directory for your OpenSearch cluster (for example, `opensearch-cluster`). Create a `docker-compose.yml` file in this directory and copy the contents of the [Docker Compose file for development](https://docs.opensearch.org/latest/install-and-configure/install-opensearch/docker/#sample-docker-compose-file-for-development) into this file.
 
 2. Start the cluster by running the following command:
 
@@ -1317,7 +1317,7 @@ Mental model:
 - Horizontal: decide what to include (filters, ranges, terms)
 - Vertical: decide how to rank it (scoring, boosting)
 
-Budget ~45–60 minutes to work through the examples.
+It might take ~45–60 minutes to work through the examples.
 
 ---
 

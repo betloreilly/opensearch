@@ -1,0 +1,21 @@
+0 verbose cli /Users/betuloreilly/.nvm/versions/node/v22.19.0/bin/node /Users/betuloreilly/.nvm/versions/node/v22.19.0/lib/node_modules/npm/bin/npm-cli.js
+1 info using npm@10.9.3
+2 info using node@v22.19.0
+3 silly config load:file:/Users/betuloreilly/.nvm/versions/node/v22.19.0/lib/node_modules/npm/npmrc
+4 silly config load:file:/Users/betuloreilly/.npmrc
+5 silly config load:file:/Users/betuloreilly/.nvm/versions/node/v22.19.0/etc/npmrc
+6 verbose title npm exec md-to-pdf opensearch_workshop_final.md --config-file md2pdf.config.js
+7 verbose argv "exec" "--yes" "--" "md-to-pdf" "opensearch_workshop_final.md" "--config-file" "md2pdf.config.js"
+8 verbose logfile logs-max:10 dir:/Users/betuloreilly/Desktop/OpenSearch/opensearch/.npm-cache/_logs/2025-11-04T14_37_11_667Z-
+9 verbose logfile /Users/betuloreilly/Desktop/OpenSearch/opensearch/.npm-cache/_logs/2025-11-04T14_37_11_667Z-debug-0.log
+10 silly logfile done cleaning log files
+11 silly packumentCache heap:4345298944 maxSize:1086324736 maxEntrySize:543162368
+12 http fetch GET 200 https://registry.npmjs.org/md-to-pdf 227ms (cache revalidated)
+13 silly packumentCache heap:4345298944 maxSize:1086324736 maxEntrySize:543162368
+14 silly packumentCache heap:4345298944 maxSize:1086324736 maxEntrySize:543162368
+15 verbose cwd /Users/betuloreilly/Desktop/OpenSearch/opensearch
+16 verbose os Darwin 24.6.0
+17 verbose node v22.19.0
+18 verbose npm  v10.9.3
+19 verbose exit 1
+20 verbose code 1

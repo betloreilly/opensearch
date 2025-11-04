@@ -1,0 +1,62 @@
+/* Page setup */
+@page {
+  size: A4;
+  margin: 20mm 16mm 20mm 16mm;
+}
+
+html, body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
+  color: #111827;
+}
+
+/* Headings */
+h1, h2, h3 {
+  color: #0f172a;
+}
+
+/* Start major sections on a new page for readability */
+h2 {
+  page-break-before: always;
+}
+/* But not the very first h2 after the title */
+h2:first-of-type {
+  page-break-before: avoid;
+}
+
+/* Tables */
+table {
+  border-collapse: collapse;
+  width: 100%;
+}
+th, td {
+  border: 1px solid #e5e7eb;
+  padding: 6px 8px;
+}
+th {
+  background: #f3f4f6;
+}
+
+/* Code blocks */
+pre, code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 12px;
+}
+pre {
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 10px 12px;
+  overflow: auto;
+}
+
+/* Images scale to page width */
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Avoid orphans/widows for headings */
+h2, h3 { page-break-after: avoid; }
+p, ul, ol { page-break-inside: avoid; }
+
+
