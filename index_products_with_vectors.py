@@ -1,48 +1,44 @@
 from sentence_transformers import SentenceTransformer
 from opensearchpy import OpenSearch
+from urllib.parse import urlparse
 import urllib3
 import os
 
 # Disable SSL warnings for self-signed certificates
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-# Get credentials from environment variables (or use defaults for local dev)
-OPENSEARCH_HOST = os.getenv('OPENSEARCH_HOST', 'localhost')
-OPENSEARCH_PORT = int(os.getenv('OPENSEARCH_PORT', '9200'))
-OPENSEARCH_USER = os.getenv('OPENSEARCH_USER', 'admin')
-OPENSEARCH_PASSWORD = os.getenv('OPENSEARCH_PASSWORD', 'MyStrongPassword123!')
+# Connection settings (credentials optional)
+OPENSEARCH_URL = os.getenv('OPENSEARCH_URL', 'http://localhost:9200')
+OPENSEARCH_USERNAME = os.getenv('OPENSEARCH_USERNAME')
+OPENSEARCH_PASSWORD = os.getenv('OPENSEARCH_PASSWORD')
+VERIFY_CERTS_ENV = os.getenv('OPENSEARCH_VERIFY_CERTS')
+
+parsed = urlparse(OPENSEARCH_URL)
+host = parsed.hostname or 'localhost'
+port = parsed.port or (443 if parsed.scheme == 'https' else 9200)
+use_ssl = parsed.scheme == 'https'
+verify_certs = (
+    (VERIFY_CERTS_ENV.lower() in ('1', 'true', 'yes')) if isinstance(VERIFY_CERTS_ENV, str)
+    else use_ssl
+)
 
 # Initialize the embedding model (384 dimensions)
 print("Loading embedding model...")
 model = SentenceTransformer('all-MiniLM-L6-v2')
 print("Model loaded successfully!\n")
 
-# Try to connect to OpenSearch
-# First try HTTPS (default Docker setup)
 print("Connecting to OpenSearch...")
-try:
-    client = OpenSearch(
-        hosts=[{'host': OPENSEARCH_HOST, 'port': OPENSEARCH_PORT}],
-        http_auth=(OPENSEARCH_USER, OPENSEARCH_PASSWORD),
-        use_ssl=True,
-        verify_certs=False,
-        ssl_assert_hostname=False,
-        ssl_show_warn=False
-    )
-    # Test the connection
-    info = client.info()
-    print(f"Connected via HTTPS to OpenSearch {info['version']['number']}\n")
-except Exception as e:
-    print(f"HTTPS connection failed: {e}")
-    print("Trying HTTP connection...\n")
-    # Try HTTP connection (if SSL is disabled in Docker)
-    client = OpenSearch(
-        hosts=[{'host': OPENSEARCH_HOST, 'port': OPENSEARCH_PORT}],
-        http_auth=(OPENSEARCH_USER, OPENSEARCH_PASSWORD),
-        use_ssl=False
-    )
-    info = client.info()
-    print(f"Connected via HTTP to OpenSearch {info['version']['number']}\n")
+client = OpenSearch(
+    hosts=[{'host': host, 'port': port}],
+    http_auth=(OPENSEARCH_USERNAME, OPENSEARCH_PASSWORD) if (OPENSEARCH_USERNAME and OPENSEARCH_PASSWORD) else None,
+    use_ssl=use_ssl,
+    verify_certs=verify_certs,
+    ssl_assert_hostname=verify_certs,
+    ssl_show_warn=verify_certs,
+)
+info = client.info()
+scheme = 'HTTPS' if use_ssl else 'HTTP'
+print(f"Connected via {scheme} to OpenSearch {info['version']['number']} at {host}:{port}\n")
 
 # Sample products
 products = [

@@ -4,7 +4,7 @@ A comprehensive hands-on workshop for building production-ready search systems w
 
 ## What You'll Learn
 
-- Core OpenSearch concepts (indices, mappings, analyzers)
+- Core OpenSearch concepts (indexes, mappings, analyzers)
 - Full-text search with relevance tuning
 - Aggregations for real-time analytics
 - Vector search and hybrid search
@@ -27,16 +27,23 @@ docker-compose up -d
 
 Wait ~30 seconds for OpenSearch to start, then verify:
 
+Security disabled (dev):
+
+```bash
+curl http://localhost:9200
+```
+
+Security enabled:
+
 ```bash
 curl -k -u admin:MyStrongPassword123! https://localhost:9200
 ```
 
 ### 2. Access OpenSearch Dashboards
 
-Open your browser to: `https://localhost:5601`
+Security disabled (dev): `http://localhost:5601`
 
-- Username: `admin`
-- Password: `MyStrongPassword123!`
+Security enabled: `https://localhost:5601` (admin / MyStrongPassword123!)
 
 ### 3. Follow the Workshop
 
@@ -65,7 +72,7 @@ For production or custom setups, create a `.env` file:
 
 ```bash
 cp env.example .env
-# Edit .env with your credentials
+# Edit .env if you use security-enabled clusters
 ```
 
 ### 4. Run the vector search scripts
@@ -78,20 +85,27 @@ python index_products_with_vectors.py
 python search_with_vectors.py
 ```
 
-## Security Notes
+## Connection Profiles
 
-**⚠️ Important for Production:**
+The examples work with both dev (security disabled) and secure clusters.
 
-1. **Change default passwords** - The workshop uses `MyStrongPassword123!` for demo purposes only
-2. **Use environment variables** - Never commit credentials to Git
-3. **Enable TLS** - Use proper certificates in production
-4. **Configure roles** - Set up proper user roles and permissions
+- Dev (security disabled): no username/password, `http://localhost:9200`
+- Secure: basic auth over HTTPS
 
-The Python scripts support environment variables:
-- `OPENSEARCH_HOST` (default: localhost)
-- `OPENSEARCH_PORT` (default: 9200)
-- `OPENSEARCH_USER` (default: admin)
-- `OPENSEARCH_PASSWORD` (default: MyStrongPassword123!)
+The Python scripts read these environment variables if present:
+
+- `OPENSEARCH_URL` (default: `http://localhost:9200`)
+- `OPENSEARCH_USERNAME` (optional)
+- `OPENSEARCH_PASSWORD` (optional)
+- `OPENSEARCH_VERIFY_CERTS` (default: `false` for http, `true` for https)
+
+If `OPENSEARCH_USERNAME`/`OPENSEARCH_PASSWORD` are not set, the scripts connect without auth.
+
+## Security Notes (production)
+
+1. Change defaults and rotate credentials
+2. Use TLS with valid certificates
+3. Assign least-privilege roles
 
 ## Files
 
