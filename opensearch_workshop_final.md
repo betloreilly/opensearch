@@ -56,7 +56,7 @@ This workshop walks you through building a real e‑commerce search system with 
 
 ## 1) OpenSearch Overview
 
-OpenSearch is an open-source search and analytics engine. Think Elasticsearch, but actually open. It’s Lucene under the hood, great for product search, logs, and real‑time dashboards.
+OpenSearch is a community‑driven, open‑source search and analytics engine built on Lucene. It’s well‑suited for product search, log analytics, and real‑time dashboards.
 
 ### What people use it for
 - **Website/App Search**: Product search, autocomplete, faceted filters
@@ -68,7 +68,7 @@ Once you index data, you get:
 - Fast, exact filters and aggregations
 - Built‑in visualizations in Dashboards
 
-It handles text, numbers, dates, geo—basically any JSON you throw at it.
+It handles text, numbers, dates, geo; basically any JSON you throw at it.
 
 ---
 
@@ -94,7 +94,7 @@ Quick facts:
 
 ### Arrays, Dot Notation, and Nested
 
-Object fields are flattened with dot notation (e.g., `user.name`). Arrays don’t have a special type—any field can have multiple values, just keep them the same type. For analyzed text arrays, token positions flow across elements.
+Object fields are flattened with dot notation (e.g., `user.name`). Arrays don’t have a special type ; any field can have multiple values, just keep them the same type. For analyzed text arrays, token positions flow across elements.
 
 **Quick demo:**
 ```json
@@ -108,7 +108,7 @@ Positions continue across values; terms share posting lists.
 
 #### The nested type (and when you actually need it)
 
-If you store an array of objects without `nested`, Lucene flattens everything—easy to index, easy to get wrong in queries. Use `nested` when multiple fields must match within the same array item. The trade‑off: each nested item becomes a hidden Lucene document.
+If you store an array of objects without `nested`, Lucene flattens everything ; easy to index, easy to get wrong in queries. Use `nested` when multiple fields must match within the same array item. The trade‑off: each nested item becomes a hidden Lucene document.
 
 > 1 product with 10 reviews = 11 Lucene docs (1 parent + 10 nested)
 
@@ -288,7 +288,6 @@ GET /products_demo/_search
 
 Key components: `idf` (how rare "wireless" is), `tf` (how often it appears), `dl/avgdl` (document length vs average).
 
-> **Note**: The full workshop dataset (section 9) includes 20 products with synonyms. This quick demo just shows how scoring works.
 
 ---
 
@@ -557,7 +556,7 @@ POST /products/_analyze
 }
 ```
 
-Notice both "headset" AND "headphones" are at position 0 - that's the synonym expansion! Now searching for either term will match both.
+Notice both "headset" AND "headphones" are at position 0 ; that's the synonym expansion! Now searching for either term will match both.
 
 **Test 3: Multiple synonyms:**
 ```json
@@ -586,7 +585,7 @@ Same deal - "TV" expands to include "television".
 
 ## Part II: Workshop Setup
 
-Alright, enough theory—let’s build something.
+Alright, enough theory, let’s build something.
 
 In this part you’ll spin up a two‑node OpenSearch cluster with Dashboards using Docker, load a small but realistic retail dataset, and sanity‑check the setup.
 
@@ -640,7 +639,7 @@ OpenSearch is a distributed search/analytics engine built on Lucene.
 
 ## 8) Environment Setup (Docker Compose)
 
-> **Note**: This setup uses a development Docker Compose file with security disabled. **This configuration disables security and should only be used in test environments.**
+> **Note**: If you already have OpenSearch running locally, you can skip to Section 9. Otherwise, follow these steps to set up a development cluster with security disabled. **This configuration should only be used in test environments.**
 
 ### Prerequisite
 
@@ -687,24 +686,15 @@ Go to **Dev Tools** (hamburger menu → Management → Dev Tools) to run queries
 
 ## 9) The Dataset
 
-We'll work with a realistic e-commerce dataset that covers the core challenges you'll face in production: mixed field types, text search with synonyms, and nested relationships.
+We'll work with a realistic e-commerce dataset: **customers** (profiles with geo data), **products** (with custom analyzers and synonyms), and **orders** (with nested line items).
 
-**Three main entities:**
+**Key patterns:**
+- Denormalized data (no joins)
+- Nested items to preserve relationships
+- Multi-field strategy (`text` + `keyword`)
+- Geo-points for location queries
 
-- **customers** – profiles with text, exact-match fields, geo coordinates, and dates
-- **products** – searchable names/descriptions with custom analyzers and synonym support
-- **orders** – order headers with nested line items (the tricky part)
-
-**Key design patterns to notice:**
-
-- **Denormalization**: We duplicate product names in order items. No joins means faster queries.
-- **Nested data**: Order items use `nested` type to keep relationships intact (so "Electronics AND price > €100" checks the same line item, not separate ones)
-- **Multi-field strategy**: Product names are indexed as both `text` (for search) and `keyword` (for sorting/aggregations)
-- **Geo-points**: Customer locations let you run proximity searches
-
-This structure scales to millions of documents and supports product search, customer segmentation, order analytics, and recommendations—the building blocks of most e-commerce search systems.
-
-> **Note for Vector Search (Section 16)**: If you plan to work through the Vector Search section later, you'll need Python 3.7+ installed on your machine. Two Python scripts (`index_products_with_vectors.py` and `search_with_vectors.py`) are available in this workshop repository to help you generate and search with vectors. We'll cover the setup details in Section 16.
+> **Note**: Section 16 (Vector Search) requires Python 3.7+ and uses scripts from this repository.
 
 ---
 
@@ -982,7 +972,7 @@ POST /products/_analyze
 }
 ```
 
-Both "headset" and its synonym "headphones" appear at position 0 - this means they're treated as equivalent during search.
+Both "headset" and its synonym "headphones" appear at position 0 ; this means they're treated as equivalent during search.
 
 #### Test 3: Sample Document Retrieval
 
@@ -1053,125 +1043,7 @@ Example (trimmed):
 }
 ```
 
-#### Test 6: Geo Query Test
-
-```json
-GET customers/_search
-{
-  "query": {
-    "geo_distance": {
-      "distance": "100km",
-      "location": {"lat": 40.4168, "lon": -3.7038}
-    }
-  }
-}
-```
-
-**Expected**: Returns customers near Madrid (C-001 Ana García).
-
-#### Test 7: Aggregation Test
-
-```json
-GET orders/_search
-{
-  "size": 0,
-  "aggs": {
-    "total_revenue": {"sum": {"field": "total_amount"}},
-    "avg_order": {"avg": {"field": "total_amount"}},
-    "order_count": {"value_count": {"field": "order_id"}}
-  }
-}
-```
-
-**Expected**: 
-- Total revenue: €1,047.45
-- Average order: €69.83
-- Order count: 15
-
-Example (trimmed):
-```json
-{
-  "aggregations": {
-    "order_count": {"value": 15},
-    "total_revenue": {"value": 1047.45},
-    "avg_order": {"value": 69.83}
-  }
-}
-```
-
-#### Test 8: Date Range Test
-
-```json
-GET orders/_search
-{
-  "query": {
-    "range": {
-      "order_date": {
-        "gte": "2025-10-01",
-        "lte": "2025-10-10"
-      }
-    }
-  }
-}
-```
-
-**Expected**: Returns orders O-1001 through O-1008 (8 orders in first 10 days).
-
-#### Test 9: Multi-field Search Test
-
-```json
-GET products/_search
-{
-  "query": {
-    "multi_match": {
-      "query": "wireless audio",
-      "fields": ["name", "description", "tags"]
-    }
-  }
-}
-```
-
-**Expected**: Returns P-1001 (Wireless Headphones). The query searches across multiple fields (name, description, tags) - this product matches because it has "wireless" in the name and "audio" in the tags.
-
-Example (trimmed):
-```json
-{
-  "hits": {
-    "total": {"value": 1},
-    "hits": [
-      {
-        "_id": "P-1001",
-        "_score": 1.403,
-        "_source": {
-          "name": "Wireless Headphones",
-          "tags": ["audio", "wireless"]
-        }
-      }
-    ]
-  }
-}
-```
-
-
-#### Test 10: Fuzzy Search Test
-
-```json
-GET products/_search
-{
-  "query": {
-    "match": {
-      "name": {
-        "query": "wireles hedphones",
-        "fuzziness": "AUTO"
-      }
-    }
-  }
-}
-```
-
-**Expected**: Returns "Wireless Headphones" despite typos.
-
-#### Test 11: Boolean Logic Test
+#### Test 6: Boolean Logic Test
 
 ```json
 GET products/_search
@@ -1204,120 +1076,11 @@ Without `minimum_should_match`, the `should` clauses would be truly optional (ni
 
 **Expected**: Electronics under €100 with either "wireless" in name OR "audio" in tags (or both).
 
-#### Test 12: Highlighting Test
-
-```json
-GET products/_search
-{
-  "query": {"match": {"description": "noise reduction"}},
-  "highlight": {
-    "fields": {"description": {}}
-  }
-}
-```
-
-**Expected**: Returns P-1001 with `<em>noise</em> <em>reduction</em>` in highlight.
-
-Example (trimmed):
-```json
-{
-  "hits": {
-    "hits": [
-      {
-        "_id": "P-1001",
-        "highlight": {"description": ["... <em>noise</em> <em>reduction</em> ..."]}
-      }
-    ]
-  }
-}
-```
-
-#### Test 13: Nested Aggregation Test
-
-```json
-GET orders/_search
-{
-  "size": 0,
-  "aggs": {
-    "items_agg": {
-      "nested": {"path": "items"},
-      "aggs": {
-        "by_category": {
-          "terms": {"field": "items.category"},
-          "aggs": {
-            "revenue": {"sum": {"field": "items.line_total"}},
-            "avg_price": {"avg": {"field": "items.unit_price"}}
-          }
-        }
-      }
-    }
-  }
-}
-```
-
-**Expected**: Revenue and average price per category (Electronics, Books, Home, Sports, Toys).
-
-#### Test 14: Exists Query Test
-
-```json
-GET customers/_search
-{
-  "query": {
-    "bool": {
-      "must": [
-        {"exists": {"field": "location"}},
-        {"term": {"loyalty_tier": "gold"}}
-      ]
-    }
-  }
-}
-```
-
-**What this does**: The `exists` query finds documents where a field has any value (not null or missing). This is useful for finding customers who have provided their location.
-
-
-#### Test 15: Terms Aggregation with Order
-
-```json
-GET products/_search
-{
-  "size": 0,
-  "aggs": {
-    "top_brands": {
-      "terms": {
-        "field": "brand",
-        "size": 5,
-        "order": {"_count": "desc"}
-      }
-    }
-  }
-}
-```
-
-**Expected**: Top brands by product count (Auron, NuLink, etc.).
-
 ---
 
 ## Part III: Querying & Analytics
 
-Now the fun part: queries and analytics. This is where the pieces click.
-
-Why this matters:
-- Different problems need different query types (full‑text vs exact)
-- Filters make things fast; scoring makes things relevant
-- A bit of tuning often turns “good enough” into “this feels right”
-
-What you’ll learn:
-- 8 core query types you’ll actually use
-- How to combine must/should/filter sanely
-- Aggregations for real‑time analytics
-- How to query nested data without getting tripped up
-
-Mental model:
-- Horizontal: decide what to include (filters, ranges, terms)
-- Vertical: decide how to rank it (scoring, boosting)
-
-It might take ~45–60 minutes to work through the examples.
+This section covers core query types, boolean logic, aggregations, and nested data queries. You'll learn when to use filters (fast, no scoring) vs. scoring queries (ranked results), and how to combine them effectively.
 
 ---
 
@@ -1626,7 +1389,7 @@ Field boosting controls how much each field influences the final relevance score
 - `description` (no boost) means: multiply by 1 (default)
 - Result: a match in `name` counts 3× more than the same match in `description`
 
-**Important:** Boosting does NOT filter results—it only changes their ranking order.
+**Important:** Boosting does NOT filter results ; it only changes their ranking order.
 
 ---
 
@@ -1758,7 +1521,7 @@ GET products/_search
   }
 }
 ```
-Now `should` is truly optional — returns all products with "earbuds" in name (P-1002, P-1007), but P-1002 ranks higher because it also matches the `should` clause (gets a score boost).
+Now `should` is truly optional ; returns all products with "earbuds" in name (P-1002, P-1007), but P-1002 ranks higher because it also matches the `should` clause (gets a score boost).
 
 ### Function Score (Advanced)
 
@@ -2146,13 +1909,10 @@ These best practices come from real-world production deployments. Following them
 
 ---
 
-- **Use explicit mappings**; disable `fielddata` on `text`; add `.keyword` for aggregations
 - **Prefer filters for speed**; minimize wildcards/regex on large fields
 - **Right-size shards**; avoid too many small shards
 - **Use `nested` only when you need per-object matching**; otherwise flatten
 - **Cache-friendly queries**: `bool.filter` with `term`/`range`
-- **Bulk indexing**: Use `_bulk` API; during loads set `refresh_interval: -1`, batch ~5–15 MB per request, parallelism 2–4× cores; restore refresh and `POST _refresh` at end
-- **Monitor heap usage**: Watch GC, avoid heap pressure; keep JVM heap < 75%; enable slow logs
 
 ---
 
@@ -2175,7 +1935,7 @@ A **shard** is a slice of your index. Instead of one giant index on one server, 
 ![An index is split into shards](shard.png)
 *Figure: An index split into shards (Source: OpenSearch Documentation)*
 
-Here's an important detail: each shard is actually a **complete Lucene index**—a full search engine running independently. This means each shard consumes CPU and memory just by existing. More shards isn't automatically better; it's about finding the right balance.
+Here's an important detail: each shard is actually a **complete Lucene index** ; a full search engine running independently. This means each shard consumes CPU and memory just by existing. More shards isn't automatically better; it's about finding the right balance.
 
 **Real example:**
 
@@ -2194,7 +1954,7 @@ With 3 shards:
 - Each server handles ~200,000 products
 ```
 
-**Another example:** A 400 GB index might be too large for any single node in your cluster. Split it into 10 shards of 40 GB each, and OpenSearch can distribute those shards across 10 nodes and manage each one individually. But splitting the same 400 GB into 1,000 shards would create unnecessary overhead—each tiny shard would waste resources. The sweet spot is **10-50 GB per shard**.
+**Another example:** A 400 GB index might be too large for any single node in your cluster. Split it into 10 shards of 40 GB each, and OpenSearch can distribute those shards across 10 nodes and manage each one individually. But splitting the same 400 GB into 1,000 shards would create unnecessary overhead; each tiny shard would waste resources. The sweet spot is **10-50 GB per shard**.
 
 ![A cluster containing two indexes and two nodes](shard2.png)
 *Figure: Shards distributed across nodes in a cluster with multiple indexes (Source: OpenSearch Documentation)*
@@ -2212,7 +1972,7 @@ With 3 shards:
 - Take over if a primary fails
 - You can add/remove these anytime
 
-By default, OpenSearch creates **1 replica for each primary shard**. So if you create an index with 10 primary shards, you get 10 replicas automatically (20 shards total). OpenSearch is smart about placement—it always puts replicas on different nodes than their primaries. This way, if a node crashes, you don't lose both the primary and its backup.
+By default, OpenSearch creates **1 replica for each primary shard**. So if you create an index with 10 primary shards, you get 10 replicas automatically (20 shards total). OpenSearch is smart about placement; it always puts replicas on different nodes than their primaries. This way, if a node crashes, you don't lose both the primary and its backup.
 
 ![A cluster containing two indexes with one replica shard for each shard in the index](primaryandreplica.png)
 *Figure: Primary and replica shards distributed across nodes (Source: OpenSearch Documentation)*
@@ -2275,7 +2035,7 @@ This is powerful for:
 
 You convert text (or images) into vectors—arrays of numbers that capture meaning. Similar items have vectors that are close together in high-dimensional space. OpenSearch uses k-NN (k-nearest neighbors) to find the closest matches.
 
-**The catch:** Vector search alone isn't always better. Sometimes users want exact matches ("iPhone 15 Pro") not semantic similarity. That's where **hybrid search** comes in—combining keyword search with vector search to get the best of both.
+**The catch:** Vector search alone isn't always better. Sometimes users want exact matches ("iPhone 15 Pro") not semantic similarity. That's where **hybrid search** comes in; combining keyword search with vector search to get the best of both.
 
 ### Understanding Vector Search Approaches
 
@@ -2285,7 +2045,7 @@ Vector search finds similar items by calculating distances between vectors. But 
 
 **Keyword search** matches exact words. When you search "wireless headphones", it finds only documents containing those specific terms. It's very fast and great for exact matches like product codes or model numbers.
 
-**Vector search** matches by meaning. The same query "wireless headphones" can find "Bluetooth earbuds", "noise cancelling headset", or "cordless audio devices"—anything semantically similar. It's slower than keyword search but excels at understanding synonyms, concepts, and "find similar items" use cases.
+**Vector search** matches by meaning. The same query "wireless headphones" can find "Bluetooth earbuds", "noise cancelling headset", or "cordless audio devices"; anything semantically similar. It's slower than keyword search but excels at understanding synonyms, concepts, and "find similar items" use cases.
 
 #### Vector Search Techniques in OpenSearch
 
@@ -2311,7 +2071,7 @@ Uses Painless scripting to compute exact distances between the query vector and 
 - **Best for**: Small datasets (< 10,000 docs), filtering before vector search, when you need perfect accuracy
 - **Requires**: Regular `knn_vector` field (no `method` needed), uses `script_score` query
 
-**3. Neural Sparse Search** ([docs](https://docs.opensearch.org/latest/vector-search/vector-search-techniques/neural-sparse-search/))
+**3. Neural Sparse Search**  
 
 Uses sparse embeddings with inverted indexes, similar to traditional keyword search but with semantic understanding.
 
@@ -2776,6 +2536,31 @@ POST products_vector/_search
 
 ## 18) Teardown (Optional)
 
+### Clean up indexes created in this workshop
+
+Dev Tools (OpenSearch Dashboards → Dev Tools):
+
+```http
+DELETE customers
+DELETE products
+DELETE orders
+DELETE products_vector
+DELETE inverted_demo
+DELETE products_demo
+DELETE catalog_object
+DELETE catalog_nested
+DELETE products_auto
+```
+
+If you created time-based indexes during experiments:
+
+```http
+DELETE products-*
+DELETE orders-*
+```
+
+Note: You do not need to remove analyzers separately; custom analyzers live inside index settings and are deleted with the index.
+
 ```bash
 docker compose down
 # or remove volumes
@@ -2874,10 +2659,6 @@ Start here: What are you searching for?
   - Vector Search Basics: https://docs.opensearch.org/latest/vector-search/getting-started/vector-search-basics/
   - Approximate k-NN: https://docs.opensearch.org/latest/vector-search/vector-search-techniques/approximate-knn/
   - Script Score (Exact k-NN): https://docs.opensearch.org/latest/search-plugins/knn/knn-score-script/
-  - Neural Sparse Search: https://docs.opensearch.org/latest/vector-search/vector-search-techniques/neural-sparse-search/
-  - k-NN Query: https://docs.opensearch.org/latest/query-dsl/specialized/knn/
-- **Index State Management (ISM)**: https://opensearch.org/docs/latest/im-plugin/ism/
-- **SQL & PPL**: https://opensearch.org/docs/latest/observing-your-data/sql/index/
 - **Security**: https://opensearch.org/docs/latest/security/
 - **Performance Analyzer**: https://opensearch.org/docs/latest/monitoring-plugins/pa/
 - **OpenSearch Rally**: https://github.com/opensearch-project/opensearch-benchmark

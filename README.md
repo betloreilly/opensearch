@@ -13,115 +13,84 @@ A comprehensive hands-on workshop for building production-ready search systems w
 
 ## Prerequisites
 
-- Docker & Docker Compose
-- Python 3.8+ (for vector search examples)
+- **Docker Desktop** 4.x+
+- **4 GB RAM** free (8 GB recommended)
+- **Python 3.8+** (only for vector search examples in Section 16)
+- **Browser** (Chrome/Firefox)
 - Basic understanding of REST APIs and JSON
 
 ## Quick Start
 
-### 1. Start OpenSearch
+### 1. Set Up OpenSearch Cluster
+
+> **Note**: This setup uses a development Docker Compose file with security disabled. **This configuration should only be used in test environments.**
+
+1. Create a directory for your OpenSearch cluster:
 
 ```bash
-docker-compose up -d
+mkdir opensearch-cluster
+cd opensearch-cluster
 ```
 
-Wait ~30 seconds for OpenSearch to start, then verify:
+2. Create a `docker-compose.yml` file in this directory and copy the contents of the [Docker Compose file for development](https://docs.opensearch.org/latest/install-and-configure/install-opensearch/docker/#sample-docker-compose-file-for-development) into this file.
 
-Security disabled (dev):
+3. Start the cluster:
+
+```bash
+docker compose up -d
+```
+
+4. Wait ~30 seconds, then verify that containers are running:
+
+```bash
+docker compose ps
+```
+
+You should see output similar to:
+
+```
+NAME                    COMMAND                  SERVICE               STATUS
+opensearch-dashboards   "./opensearch-dashb…"    opensearch-dashboards running
+opensearch-node1        "./opensearch-docker…"   opensearch-node1      running
+opensearch-node2        "./opensearch-docker…"   opensearch-node2      running
+```
+
+5. Verify that OpenSearch is running:
 
 ```bash
 curl http://localhost:9200
 ```
 
-Security enabled:
-
-```bash
-curl -k -u admin:MyStrongPassword123! https://localhost:9200
-```
+You should see JSON with cluster info.
 
 ### 2. Access OpenSearch Dashboards
 
-Security disabled (dev): `http://localhost:5601`
+Open `http://localhost:5601/` in your browser.
 
-Security enabled: `https://localhost:5601` (admin / MyStrongPassword123!)
+Go to **Dev Tools** (hamburger menu → Management → Dev Tools) to run queries.
 
 ### 3. Follow the Workshop
 
 Open `opensearch_workshop_final.md` and follow along step-by-step.
 
-## Vector Search Setup
-
-For the vector search section (Section 16), you'll need Python:
-
-### 1. Create a virtual environment
-
-```bash
-python3 -m venv opensearch-venv
-source opensearch-venv/bin/activate  # On Windows: opensearch-venv\Scripts\activate
-```
-
-### 2. Install dependencies
-
-```bash
-pip install sentence-transformers opensearch-py
-```
-
-### 3. Set up environment variables (optional)
-
-For production or custom setups, create a `.env` file:
-
-```bash
-cp env.example .env
-# Edit .env if you use security-enabled clusters
-```
-
-### 4. Run the vector search scripts
-
-```bash
-# Index products with embeddings
-python index_products_with_vectors.py
-
-# Search with vectors
-python search_with_vectors.py
-```
-
-## Connection Profiles
-
-The examples work with both dev (security disabled) and secure clusters.
-
-- Dev (security disabled): no username/password, `http://localhost:9200`
-- Secure: basic auth over HTTPS
-
-The Python scripts read these environment variables if present:
-
-- `OPENSEARCH_URL` (default: `http://localhost:9200`)
-- `OPENSEARCH_USERNAME` (optional)
-- `OPENSEARCH_PASSWORD` (optional)
-- `OPENSEARCH_VERIFY_CERTS` (default: `false` for http, `true` for https)
-
-If `OPENSEARCH_USERNAME`/`OPENSEARCH_PASSWORD` are not set, the scripts connect without auth.
-
-## Security Notes (production)
-
-1. Change defaults and rotate credentials
-2. Use TLS with valid certificates
-3. Assign least-privilege roles
+> **Note**: Section 16 (Vector Search) requires Python 3.8+. Setup instructions are provided in that section.
 
 ## Files
 
 - `opensearch_workshop_final.md` - Main workshop document
-- `docker-compose.yml` - OpenSearch cluster setup
 - `index_products_with_vectors.py` - Generate and index product embeddings
 - `search_with_vectors.py` - Search using vector similarity
-- `env.example` - Example environment variables file
+- `env.example` - Example environment variables for Python scripts
 
 ## Cleanup
 
-To stop and remove all containers:
+To stop and remove all containers, run this from your `opensearch-cluster` directory:
 
 ```bash
-docker-compose down -v
+docker compose down -v
 ```
+
+To remove workshop indexes from OpenSearch, see Section 18 (Teardown) in the workshop document.
 
 ## Troubleshooting
 
