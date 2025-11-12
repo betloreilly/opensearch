@@ -1,6 +1,6 @@
 # OpenSearch Advanced Workshop: E-commerce Scenario
 
-This workshop walks you through building a real e‑commerce search system with OpenSearch. We’ll work with a practical dataset, tune relevance so good results float to the top. 
+This workshop walks you through building a real e‑commerce search system with OpenSearch. We'll work with a practical dataset, tune relevance so good results float to the top. 
 
 ---
 
@@ -56,7 +56,7 @@ This workshop walks you through building a real e‑commerce search system with 
 
 ## 1) OpenSearch Overview
 
-OpenSearch is a community‑driven, open‑source search and analytics engine built on Lucene. It’s well‑suited for product search, log analytics, and real‑time dashboards.
+OpenSearch is a community‑driven, open‑source search and analytics engine built on Lucene. It's well‑suited for product search, log analytics, and real‑time dashboards.
 
 ### What people use it for
 - **Website/App Search**: Product search, autocomplete, faceted filters
@@ -76,7 +76,7 @@ It handles text, numbers, dates, geo; basically any JSON you throw at it.
 
 ### Documents & Indexes
 
-Everything is a JSON document. If you’re coming from SQL: a document is like a row; an index is like a table.
+Everything is a JSON document. If you're coming from SQL: a document is like a row; an index is like a table.
 
 **Example document:**
 ```json
@@ -94,7 +94,7 @@ Quick facts:
 
 ### Arrays, Dot Notation, and Nested
 
-Object fields are flattened with dot notation (e.g., `user.name`). Arrays don’t have a special type ; any field can have multiple values, just keep them the same type. For analyzed text arrays, token positions flow across elements.
+Object fields are flattened with dot notation (e.g., `user.name`). Arrays don't have a special type ; any field can have multiple values, just keep them the same type. For analyzed text arrays, token positions flow across elements.
 
 **Quick demo:**
 ```json
@@ -585,16 +585,16 @@ Same deal - "TV" expands to include "television".
 
 ## Part II: Workshop Setup
 
-Alright, enough theory, let’s build something.
+Alright, enough theory, let's build something.
 
-In this part you’ll spin up a two‑node OpenSearch cluster with Dashboards using Docker, load a small but realistic retail dataset, and sanity‑check the setup.
+In this part you'll spin up a two‑node OpenSearch cluster with Dashboards using Docker, load a small but realistic retail dataset, and sanity‑check the setup.
 
 Why this matters:
-- **Real data**: customers, products, orders—exactly what you’ll see in production
-- **Repeatable**: Docker removes “works on my machine”
+- **Real data**: customers, products, orders—exactly what you'll see in production
+- **Repeatable**: Docker removes "works on my machine"
 - **Complete**: mappings, analyzers, nested data, geo, and queries all in one place
 
-You’ll learn how to structure indexes, choose analyzers, model one‑to‑many relationships, and verify everything with quick tests.
+You'll learn how to structure indexes, choose analyzers, model one‑to‑many relationships, and verify everything with quick tests.
 Plan ~20–30 minutes for setup and loading.
 
 ---
@@ -1376,7 +1376,7 @@ POST products/_search/template
 }
 ```
 
-Expected: Results include products that mention either term across name/description (e.g., P-1001 “Wireless Headphones”, P-1002 “In Ear Earbuds”).
+Expected: Results include products that mention either term across name/description (e.g., P-1001 "Wireless Headphones", P-1002 "In Ear Earbuds").
 
 ### Field Boosting
 
@@ -1922,15 +1922,15 @@ These best practices come from real-world production deployments. Following them
 
 ### The Problem: One Machine Isn't Enough
 
-Let's say you're running an e-commerce site. You start with 100,000 products in one OpenSearch index on one server. Works great. 
+Let's say you're running an e-commerce site. You start with 100,000 products in one OpenSearch index on one node. Works great. 
 
-A year later: 5 million products, 20 GB of data, thousands of queries per second. Your single server is struggling. You need to spread the load.
+A year later: 5 million products, 20 GB of data, thousands of queries per second. Your single node is struggling. You need to spread the load.
 
 That's where sharding comes in.
 
 ### What Are Shards?
 
-A **shard** is a slice of your index. Instead of one giant index on one server, you split it into smaller pieces across multiple servers.
+A **shard** is a slice of your index. Instead of one giant index on one node, you split it into smaller pieces across multiple nodes.
 
 ![An index is split into shards](shard.png)
 *Figure: An index split into shards (Source: OpenSearch Documentation)*
@@ -1943,18 +1943,18 @@ Here's an important detail: each shard is actually a **complete Lucene index** ;
 You have 600,000 products (30 GB total)
 
 Without sharding:
-- 1 index on 1 server
+- 1 index on 1 node
 - 30 GB on one machine
-- All queries hit one server
+- All queries hit one node
 
-With 3 shards:
+With 3 shards (distributed across 3 nodes):
 - Index split into 3 pieces
-- 10 GB per shard
-- Queries distributed across 3 servers
-- Each server handles ~200,000 products
+- ~10 GB per shard
+- Queries run in parallel across 3 nodes
+- Each node handles ~200,000 products
 ```
 
-**Another example:** A 400 GB index might be too large for any single node in your cluster. Split it into 10 shards of 40 GB each, and OpenSearch can distribute those shards across 10 nodes and manage each one individually. But splitting the same 400 GB into 1,000 shards would create unnecessary overhead; each tiny shard would waste resources. The sweet spot is **10-50 GB per shard**.
+**Another example:** A 400 GB index might be too large for any single node in your cluster. Split it into 10 shards of ~40 GB each, and OpenSearch can distribute those shards across 10 nodes and manage each one individually. But splitting the same 400 GB into 1,000 shards would create unnecessary overhead; each tiny shard would waste resources. The ideal number of shards depends on performance testing for your workload. As a starting point, target shard sizes between 10–50 GB per shard: 10–30 GB per shard for low‑latency application search, and 30–50 GB per shard for write‑heavy log analytics.
 
 ![A cluster containing two indexes and two nodes](shard2.png)
 *Figure: Shards distributed across nodes in a cluster with multiple indexes (Source: OpenSearch Documentation)*
@@ -1997,11 +1997,11 @@ PUT /products
 
 **When you search:** The query hits all shards at once, each searches its portion, then results get merged. Your query is only as fast as the slowest shard.
 
-**If a server crashes:** Replicas on other servers get promoted to primaries. Zero downtime.
+**If a node crashes:** Replicas on other nodes get promoted to primaries. Zero downtime.
 
 ### Finding the Right Balance
 
-More shards doesn't mean faster. With 10 million products: 1 shard takes 800ms, 3 shards take 300ms (parallel search wins), but 100 shards take 900ms (overhead kills you). Sweet spot: **3-10 shards, 10-50 GB each**.
+More shards doesn't mean faster. With 10 million products: 1 shard takes 800ms, 3 shards take 300ms (parallel search wins), but 100 shards take 900ms (overhead kills you). As a starting point, aim for shard sizes between 10–50 GB per shard (10–30 GB for low‑latency search, 30–50 GB for write‑heavy logs), and a total shard count in the low single digits per index. Always validate with performance testing.
 
 **Common mistakes:**
 - **Too many:** 50 shards for 5 GB wastes resources
@@ -2014,7 +2014,7 @@ More shards doesn't mean faster. With 10 million products: 1 shard takes 800ms, 
 | Your Data | Start With |
 |-----------|------------|
 | Under 10 GB | 1 shard, 1 replica |
-| 10-50 GB | 2-3 shards, 1 replica |
+| 10-50 GB | 2-3 shards, 1 replica (target 10–30 GB per shard for app search) |
 | 50-200 GB | 5-10 shards, 1 replica |
 | 200 GB+ | Time-based indexes |
 
